@@ -1,7 +1,9 @@
 package com.swisherdominicana.molde.security
 
 import com.swisherdominicana.molde.model.TUsuarios
+import com.swisherdominicana.molde.model.Usuario
 import com.swisherdominicana.molde.repository.UserRepository
+import com.swisherdominicana.molde.repository.UsuarioRepository
 import com.swisherdominicana.molde.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.userdetails.User
@@ -17,6 +19,9 @@ class MyUserDetails implements UserDetailsService {
     private UserRepository userRepository
 
     @Autowired
+    private UsuarioRepository usuarioRepository
+
+    @Autowired
     UserService userService
 
 
@@ -24,7 +29,7 @@ class MyUserDetails implements UserDetailsService {
     UserDetails loadUserByUsername(String username) {
         try {
             //final TUsuarios tuser = userRepository.findByUsername(username)
-            final TUsuarios tuser = userService.customFindByUsername(username)
+            final Usuario tuser = usuarioRepository.findByUsername(username)
 
             if (tuser == null) {
                 throw new UsernameNotFoundException("User '" + username + "' not found")
@@ -44,4 +49,29 @@ class MyUserDetails implements UserDetailsService {
 
         }
     }
+
+//    @Override
+//    UserDetails loadUserByUsername(String username) {
+//        try {
+//            //final TUsuarios tuser = userRepository.findByUsername(username)
+//            final TUsuarios tuser = userService.customFindByUsername(username)
+//
+//            if (tuser == null) {
+//                throw new UsernameNotFoundException("User '" + username + "' not found")
+//            }
+//
+//            return User//
+//                    .withUsername(username)//
+//                    .password(tuser.getPassword())//
+//                    .authorities(tuser.getAuthorities())//
+//                    .accountExpired(false)//
+//                    .accountLocked(false)//
+//                    .credentialsExpired(false)//
+//                    .disabled(false)//
+//                    .build()
+//        } catch(Exception e) {
+//            println e.getStackTrace()
+//
+//        }
+//    }
 }

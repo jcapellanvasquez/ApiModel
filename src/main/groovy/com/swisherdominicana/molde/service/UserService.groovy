@@ -2,7 +2,9 @@ package com.swisherdominicana.molde.service
 
 import com.swisherdominicana.molde.exception.CustomException
 import com.swisherdominicana.molde.model.TUsuarios
+import com.swisherdominicana.molde.model.Usuario
 import com.swisherdominicana.molde.repository.UserRepository
+import com.swisherdominicana.molde.repository.UsuarioRepository
 import com.swisherdominicana.molde.security.JwtTokenProvider
 import com.swisherdominicana.molde.utils.HashUtil
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,16 +13,21 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
 import javax.servlet.http.HttpServletRequest
+import java.util.concurrent.ExecutionException
 
 @Service
 class UserService {
 
     @Autowired
     private UserRepository userRepository
+
+    @Autowired
+    private UsuarioRepository usuarioRepository
 
     @Autowired
     PasswordEncoder passwordEncoder
@@ -37,18 +44,20 @@ class UserService {
     @Autowired
     private SqlService sqlService
 
-    String signin(String username, String password) {
+    String signin(String username, String password) throws Exception {
 
-        TUsuarios user
+        Usuario user
 
         try {
-            password = HashUtil.getMD5(password).toUpperCase()
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password + username))
-            user = userRepository.findByUsername(username)
-            return jwtTokenProvider.createToken(username, user)
-        } catch (Exception e) {
-            e.printStackTrace()
-            throw new CustomException("Invalid username/password supplied", HttpStatus.UNPROCESSABLE_ENTITY)
+            //password = HashUtil.getMD5(password).toUpperCase()
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password))
+            user = usuarioRepository.findByUsername(username)
+            return jwtTokenProvider.createToken(user)
+        }
+        catch (Exception e) {
+           // e.printStackTrace()
+           // throw new CustomException("Invalid username/password supplied", HttpStatus.UNPROCESSABLE_ENTITY)
+            throw new UsernameNotFoundException("Usuario no pudo ser encontrado: " + username)
         }
     }
 
@@ -77,7 +86,8 @@ class UserService {
         return user
     }
 
-    TUsuarios customFindByUsername(String username) {
+
+    Usuario customFindByUsername(String username) {
         String query = "select \n" +
                 "substring(a.passwd,4,length(a.passwd)) as f_password,\n" +
                 "    b.f_codigo_usuario,\n" +
@@ -90,7 +100,7 @@ class UserService {
         Map u = jdbcTemplate.queryForMap(query)
 
 
-        TUsuarios user = new TUsuarios()
+        Usuario user = new Usuario()
 
         user.setF_codigo_usuario(u.get("f_codigo_usuario", 0).toString().toBigDecimal())
         user.setUsername(u.get("f_id_usuario", "").toString())

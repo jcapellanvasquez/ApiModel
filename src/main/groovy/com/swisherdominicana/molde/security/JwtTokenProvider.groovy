@@ -2,6 +2,7 @@ package com.swisherdominicana.molde.security
 
 import com.swisherdominicana.molde.exception.CustomException
 import com.swisherdominicana.molde.model.TUsuarios
+import com.swisherdominicana.molde.model.Usuario
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
@@ -81,6 +82,30 @@ class JwtTokenProvider {
         // TODO este rol solo es para el test, preguntar mas adelante si se utilza algun tipo de estructura para manejar los roles
         claims.put("auth", new SimpleGrantedAuthority("ROLE_ADMIN"))
         claims.put("id", usuario.f_codigo_usuario)
+
+        // Eliminamos la password
+        usuario.setPassword("")
+
+        claims.put("user", usuario)
+
+        Date now = new Date()
+        Date validity = new Date(now.getTime() + validityInMilliseconds)
+
+        return Jwts.builder()//
+                .setClaims(claims)//
+                .setIssuedAt(now)//
+                .setExpiration(validity)//
+                .signWith(SignatureAlgorithm.HS256, secretKey)//
+                .compact()
+    }
+
+    String createToken(Usuario usuario) {
+
+        Claims claims = Jwts.claims().setSubject(usuario.username)
+
+        // TODO este rol solo es para el test, preguntar mas adelante si se utilza algun tipo de estructura para manejar los roles
+        claims.put("auth", new SimpleGrantedAuthority("ROLE_ADMIN"))
+        claims.put("id", usuario.getId())
 
         // Eliminamos la password
         usuario.setPassword("")
